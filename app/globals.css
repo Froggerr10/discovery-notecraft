@@ -1,0 +1,234 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Notecraft Styles */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900;
+    @apply text-gray-200;
+    @apply selection:bg-teal-400/20 selection:text-teal-300;
+  }
+}
+
+@layer components {
+  /* Glassmorphism Components */
+  .glass {
+    @apply backdrop-blur-sm bg-white/5 border border-white/10;
+  }
+  
+  .glass-strong {
+    @apply backdrop-blur-md bg-white/10 border border-white/20;
+  }
+  
+  .glass-button {
+    @apply backdrop-blur-sm bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-200;
+  }
+  
+  /* Custom Input Styles */
+  .input-glass {
+    @apply backdrop-blur-sm bg-white/5 border border-white/10 text-gray-200 placeholder-gray-400;
+    @apply focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent;
+    @apply transition-all duration-200;
+  }
+  
+  /* Custom Button Styles */
+  .btn-primary {
+    @apply bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-semibold;
+    @apply hover:from-teal-600 hover:to-emerald-600 transition-all duration-200;
+    @apply shadow-lg shadow-teal-500/25 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .btn-secondary {
+    @apply bg-teal-600/30 border border-teal-500/50 text-teal-300;
+    @apply hover:bg-teal-600/50 hover:text-teal-200 transition-all duration-200;
+  }
+  
+  /* Custom Scrollbar */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(45 212 191 / 0.5) transparent;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-teal-500/50 rounded-full;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-teal-500/70;
+  }
+}
+
+@layer utilities {
+  /* Text Gradient Utilities */
+  .text-gradient-teal {
+    @apply bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent;
+  }
+  
+  .text-gradient-gold {
+    @apply bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent;
+  }
+  
+  /* Animation Utilities */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+  
+  /* Background Pattern */
+  .bg-pattern {
+    background-image: 
+      radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0);
+    background-size: 20px 20px;
+  }
+  
+  /* Backdrop Effects */
+  .backdrop-blur-strong {
+    backdrop-filter: blur(20px);
+  }
+  
+  .backdrop-blur-subtle {
+    backdrop-filter: blur(8px);
+  }
+}
+
+/* Custom Animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 0 20px rgba(45, 212, 191, 0.5);
+  }
+  to {
+    text-shadow: 0 0 30px rgba(45, 212, 191, 0.8);
+  }
+}
+
+/* Custom Range Slider Styles */
+input[type="range"] {
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-track {
+  @apply bg-gray-700 rounded-lg h-2;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  @apply h-5 w-5 rounded-full border-2 border-white;
+  background: linear-gradient(135deg, #14b8a6, #10b981);
+  box-shadow: 0 4px 8px rgba(20, 184, 166, 0.3);
+}
+
+input[type="range"]::-moz-range-track {
+  @apply bg-gray-700 rounded-lg h-2 border-none;
+}
+
+input[type="range"]::-moz-range-thumb {
+  @apply h-5 w-5 rounded-full border-2 border-white;
+  background: linear-gradient(135deg, #14b8a6, #10b981);
+  box-shadow: 0 4px 8px rgba(20, 184, 166, 0.3);
+  cursor: pointer;
+}
+
+/* Custom Radio and Checkbox Styles */
+input[type="radio"], input[type="checkbox"] {
+  @apply accent-teal-400;
+}
+
+/* Loading Animation */
+.loading-dots {
+  display: inline-block;
+  position: relative;
+  width: 40px;
+  height: 10px;
+}
+
+.loading-dots div {
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation-timing-function: cubic-bezier(0, 1, 1, 0);
+}
+
+.loading-dots div:nth-child(1) {
+  left: 4px;
+  animation: loading1 0.6s infinite;
+}
+
+.loading-dots div:nth-child(2) {
+  left: 4px;
+  animation: loading2 0.6s infinite;
+}
+
+.loading-dots div:nth-child(3) {
+  left: 16px;
+  animation: loading2 0.6s infinite;
+}
+
+.loading-dots div:nth-child(4) {
+  left: 28px;
+  animation: loading3 0.6s infinite;
+}
+
+@keyframes loading1 {
+  0% { transform: scale(0); }
+  100% { transform: scale(1); }
+}
+
+@keyframes loading3 {
+  0% { transform: scale(1); }
+  100% { transform: scale(0); }
+}
+
+@keyframes loading2 {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(12px, 0); }
+}
+
+/* Focus States */
+*:focus-visible {
+  @apply outline-none ring-2 ring-teal-400 ring-offset-2 ring-offset-gray-900;
+}
+
+/* Print Styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    @apply bg-white text-black;
+  }
+  
+  .glass, .glass-strong {
+    @apply bg-white border-gray-300;
+  }
+}
