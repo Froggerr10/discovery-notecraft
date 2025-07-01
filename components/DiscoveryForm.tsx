@@ -288,7 +288,7 @@ export default function DiscoveryForm({
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 ${className}`}>
-      {/* Background Pattern */}
+      {/* Background Pattern - CORRECTED */}
       <div className="fixed inset-0 opacity-30">
         <div className="absolute inset-0" 
              style={{
