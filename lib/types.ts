@@ -12,7 +12,6 @@
 export type PackageType = 'entry' | 'plus' | 'premium';
 export type PriorityLevel = 'critical' | 'high' | 'medium' | 'low';
 export type ReadinessLevel = 'iniciante' | 'intermediario' | 'avancado';
-// CORREÇÃO: Adicionado 'number' ao ResponseType
 export type ResponseType = 'radio' | 'checkbox' | 'slider' | 'text' | 'select' | 'number';
 
 // =====================================================
@@ -20,13 +19,13 @@ export type ResponseType = 'radio' | 'checkbox' | 'slider' | 'text' | 'select' |
 // =====================================================
 
 export interface ClientProfile {
-  name: string; // Corresponde a contactName no formulário
-  email: string; // Corresponde a contactEmail no formulário
-  company: string; // Corresponde a companyName no formulário
+  name: string;
+  email: string;
+  company: string;
   position?: string;
-  phone?: string; // Corresponde a contactPhone no formulário
-  sector?: string; // Tornando opcional se não for coletado no form
-  size?: 'small' | 'medium' | 'large'; // Tornando opcional se não for coletado no form
+  phone?: string;
+  sector?: string;
+  size?: 'small' | 'medium' | 'large';
 }
 
 // =====================================================
@@ -34,17 +33,17 @@ export interface ClientProfile {
 // =====================================================
 
 export interface Question {
-  id: string; // ex: 'q1-1', 'q2-3'
-  sectionNumber: number; // 1-17
+  id: string;
+  sectionNumber: number;
   sectionName: string;
   questionText: string;
   responseType: ResponseType;
-  options?: string[]; // Para radio, checkbox, select, slider
-  minValue?: number; // Para sliders (não usado no front, mas mantido na interface)
-  maxValue?: number; // Para sliders (não usado no front, mas mantido na interface)
+  options?: string[];
+  minValue?: number;
+  maxValue?: number;
   required: boolean;
-  placeholder?: string; // Para text inputs e number inputs
-  additionalField?: string; // Adicionado para compatibilidade com o prompt original
+  placeholder?: string;
+  additionalField?: string;
 }
 
 export interface QuestionResponse {
@@ -53,10 +52,10 @@ export interface QuestionResponse {
   sectionName: string;
   questionText: string;
   responseType: ResponseType;
-  responseValue: any; // Flexível para diferentes tipos - CORREÇÃO: antes era 'response'
-  observations?: string; // Campo observações visível
-  aiAwareNotes?: string; // Campo IA-Aware oculto - CORREÇÃO: antes era 'aiAware'
-  answeredAt: string; // CORREÇÃO: De Date para string
+  responseValue: any;
+  observations?: string;
+  aiAwareNotes?: string;
+  answeredAt: string;
 }
 
 // =====================================================
@@ -66,7 +65,7 @@ export interface QuestionResponse {
 export interface SectionInsight {
   sectionNumber: number;
   sectionName: string;
-  score: number; // 0-10
+  score: number;
   scoreJustification: string;
   whatWasEvaluated: string;
   whyThisScore: string;
@@ -95,7 +94,7 @@ export interface AgentRecommendation {
   agentName: string;
   agentDescription: string;
   agentCategory: 'commercial' | 'operational' | 'analytical';
-  priority: number; // 1-5, sendo 1 mais importante
+  priority: number;
   priorityJustification: string;
   roiPercentage: number;
   implementationWeeks: number;
@@ -155,7 +154,7 @@ export interface PackageConfiguration {
 
 export interface DiscoveryAnalysis {
   submissionId: string;
-  overallScore: number; // 0-100
+  overallScore: number;
   readinessLevel: ReadinessLevel;
   maturityScores: MaturityScores;
   recommendedPackage: PackageType;
@@ -169,7 +168,7 @@ export interface DiscoveryAnalysis {
   priorityAgents: AgentRecommendation[];
   keyInsights: string[];
   predictedResistance: string[];
-  analyzedAt: string; // CORREÇÃO: De Date para string
+  analyzedAt: string;
   analystVersion: string;
 }
 
@@ -179,18 +178,18 @@ export interface DiscoveryAnalysis {
 
 export interface FormSubmission {
   id: string;
-  clientProfile: ClientProfile; // CORREÇÃO: Objeto ClientProfile, não campos soltos
+  clientProfile: ClientProfile;
   responses: QuestionResponse[];
-  createdAt: string; // CORREÇÃO: De Date para string
-  updatedAt: string; // CORREÇÃO: De Date para string
-  completedAt?: string; // CORREÇÃO: De Date para string
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string;
   isCompleted: boolean;
   analysisCompleted: boolean;
   packageRecommended?: PackageType;
   estimatedROI?: number;
   implementationPriority?: PriorityLevel;
-  status: 'pending' | 'completed' | 'draft'; // Adicionado status para refletir o uso no formulário
-  submittedAt?: string; // Adicionado para refletir o uso no formulário e compatibilidade
+  status: 'pending' | 'completed' | 'draft';
+  submittedAt?: string;
 }
 
 // =====================================================
@@ -286,7 +285,7 @@ export interface APIResponse<T> {
     details?: any;
   };
   metadata?: {
-    timestamp: string; // CORREÇÃO: De Date para string
+    timestamp: string;
     requestId: string;
     version: string;
   };
@@ -319,7 +318,7 @@ export interface ActivityLog {
   userAgent?: string;
   ipAddress?: string;
   sessionData?: Record<string, any>;
-  createdAt: string; // CORREÇÃO: De Date para string
+  createdAt: string;
 }
 
 // =====================================================
@@ -389,7 +388,6 @@ export function validateClientProfile(profile: Partial<ClientProfile>): profile 
     profile.name &&
     profile.email &&
     profile.company
-    // 'phone', 'sector', 'size' são opcionais em ClientProfile agora
   );
 }
 
@@ -397,8 +395,8 @@ export function validateQuestionResponse(response: Partial<QuestionResponse>): r
   return !!(
     response.questionId &&
     response.sectionNumber &&
-    response.sectionName && // Adicionado para compatibilidade
-    response.questionText && // Adicionado para compatibilidade
+    response.sectionName &&
+    response.questionText &&
     response.responseType &&
     response.responseValue !== undefined
   );
@@ -413,7 +411,7 @@ export function validateSubmission(submission: Partial<FormSubmission>): submiss
     submission.responses.length > 0 &&
     submission.createdAt &&
     submission.updatedAt &&
-    submission.isCompleted !== undefined // Verifica se o campo boolean existe
+    submission.isCompleted !== undefined
   );
 }
 
@@ -452,32 +450,4 @@ export const DISCOVERY_CONSTANTS = {
   }
 } as const;
 
-// =====================================================
-// EXPORTAÇÕES
-// =====================================================
-
-export default {
-  // Tipos principais
-  ClientProfile,
-  Question,
-  QuestionResponse,
-  SectionInsight,
-  AgentRecommendation,
-  ROIProjection,
-  DiscoveryAnalysis,
-  FormSubmission,
-  DiscoveryReport,
-  
-  // Utilitários
-  validateClientProfile,
-  validateQuestionResponse,
-  validateSubmission,
-  
-  // Constantes
-  DISCOVERY_CONSTANTS,
-  
-  // Errors
-  DiscoveryError,
-  ValidationError,
-  AnalysisError
-};
+// Remova todo o export default do final
