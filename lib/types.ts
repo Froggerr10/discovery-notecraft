@@ -12,20 +12,21 @@
 export type PackageType = 'entry' | 'plus' | 'premium';
 export type PriorityLevel = 'critical' | 'high' | 'medium' | 'low';
 export type ReadinessLevel = 'iniciante' | 'intermediario' | 'avancado';
-export type ResponseType = 'radio' | 'checkbox' | 'slider' | 'text' | 'select';
+// CORREÇÃO: Adicionado 'number' ao ResponseType
+export type ResponseType = 'radio' | 'checkbox' | 'slider' | 'text' | 'select' | 'number';
 
 // =====================================================
 // PERFIL DO CLIENTE
 // =====================================================
 
 export interface ClientProfile {
-  name: string;
-  email: string;
-  company: string;
+  name: string; // Corresponde a contactName no formulário
+  email: string; // Corresponde a contactEmail no formulário
+  company: string; // Corresponde a companyName no formulário
   position?: string;
-  phone?: string;
-  sector: string;
-  size: 'small' | 'medium' | 'large';
+  phone?: string; // Corresponde a contactPhone no formulário
+  sector?: string; // Tornando opcional se não for coletado no form
+  size?: 'small' | 'medium' | 'large'; // Tornando opcional se não for coletado no form
 }
 
 // =====================================================
@@ -38,11 +39,12 @@ export interface Question {
   sectionName: string;
   questionText: string;
   responseType: ResponseType;
-  options?: string[]; // Para radio, checkbox, select
-  minValue?: number; // Para sliders
-  maxValue?: number; // Para sliders
+  options?: string[]; // Para radio, checkbox, select, slider
+  minValue?: number; // Para sliders (não usado no front, mas mantido na interface)
+  maxValue?: number; // Para sliders (não usado no front, mas mantido na interface)
   required: boolean;
-  placeholder?: string; // Para text inputs
+  placeholder?: string; // Para text inputs e number inputs
+  additionalField?: string; // Adicionado para compatibilidade com o prompt original
 }
 
 export interface QuestionResponse {
@@ -51,10 +53,10 @@ export interface QuestionResponse {
   sectionName: string;
   questionText: string;
   responseType: ResponseType;
-  responseValue: any; // Flexível para diferentes tipos
+  responseValue: any; // Flexível para diferentes tipos - CORREÇÃO: antes era 'response'
   observations?: string; // Campo observações visível
-  aiAwareNotes?: string; // Campo IA-Aware oculto
-  answeredAt: Date;
+  aiAwareNotes?: string; // Campo IA-Aware oculto - CORREÇÃO: antes era 'aiAware'
+  answeredAt: string; // CORREÇÃO: De Date para string
 }
 
 // =====================================================
@@ -167,7 +169,7 @@ export interface DiscoveryAnalysis {
   priorityAgents: AgentRecommendation[];
   keyInsights: string[];
   predictedResistance: string[];
-  analyzedAt: Date;
+  analyzedAt: string; // CORREÇÃO: De Date para string
   analystVersion: string;
 }
 
@@ -177,16 +179,18 @@ export interface DiscoveryAnalysis {
 
 export interface FormSubmission {
   id: string;
-  clientProfile: ClientProfile;
+  clientProfile: ClientProfile; // CORREÇÃO: Objeto ClientProfile, não campos soltos
   responses: QuestionResponse[];
-  createdAt: Date;
-  updatedAt: Date;
-  completedAt?: Date;
+  createdAt: string; // CORREÇÃO: De Date para string
+  updatedAt: string; // CORREÇÃO: De Date para string
+  completedAt?: string; // CORREÇÃO: De Date para string
   isCompleted: boolean;
   analysisCompleted: boolean;
   packageRecommended?: PackageType;
   estimatedROI?: number;
   implementationPriority?: PriorityLevel;
+  status: 'pending' | 'completed' | 'draft'; // Adicionado status para refletir o uso no formulário
+  submittedAt?: string; // Adicionado para refletir o uso no formulário e compatibilidade
 }
 
 // =====================================================
@@ -282,7 +286,7 @@ export interface APIResponse<T> {
     details?: any;
   };
   metadata?: {
-    timestamp: Date;
+    timestamp: string; // CORREÇÃO: De Date para string
     requestId: string;
     version: string;
   };
@@ -315,7 +319,7 @@ export interface ActivityLog {
   userAgent?: string;
   ipAddress?: string;
   sessionData?: Record<string, any>;
-  createdAt: Date;
+  createdAt: string; // CORREÇÃO: De Date para string
 }
 
 // =====================================================
@@ -384,8 +388,8 @@ export function validateClientProfile(profile: Partial<ClientProfile>): profile 
   return !!(
     profile.name &&
     profile.email &&
-    profile.company &&
-    profile.sector
+    profile.company
+    // 'phone', 'sector', 'size' são opcionais em ClientProfile agora
   );
 }
 
@@ -393,6 +397,8 @@ export function validateQuestionResponse(response: Partial<QuestionResponse>): r
   return !!(
     response.questionId &&
     response.sectionNumber &&
+    response.sectionName && // Adicionado para compatibilidade
+    response.questionText && // Adicionado para compatibilidade
     response.responseType &&
     response.responseValue !== undefined
   );
@@ -404,7 +410,10 @@ export function validateSubmission(submission: Partial<FormSubmission>): submiss
     submission.clientProfile &&
     validateClientProfile(submission.clientProfile) &&
     submission.responses &&
-    submission.responses.length > 0
+    submission.responses.length > 0 &&
+    submission.createdAt &&
+    submission.updatedAt &&
+    submission.isCompleted !== undefined // Verifica se o campo boolean existe
   );
 }
 
