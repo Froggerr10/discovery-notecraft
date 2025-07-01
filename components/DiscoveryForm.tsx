@@ -79,60 +79,6 @@ export default function DiscoveryForm({
     }
   }, [hasUnsavedChanges, handleSave]);
 
-  // Keyboard shortcuts
-  const handlePrevious = useCallback(() => {
-    if (currentSection > 1) {
-      setCurrentSection(prev => prev - 1);
-    }
-  }, [currentSection]);
-
-  const handleNext = useCallback(() => {
-    if (isCurrentSectionValid()) {
-      if (!completedSections.includes(currentSection)) {
-        setCompletedSections(prev => [...prev, currentSection]);
-      }
-      handleSave(); // Salva antes de avançar
-      if (currentSection < DISCOVERY_QUESTIONS[DISCOVERY_QUESTIONS.length - 1].sectionNumber) { // Usa o número da última seção dinamicamente
-        setCurrentSection(prev => prev + 1);
-      }
-    } else {
-      alert('Por favor, preencha todas as perguntas obrigatórias desta seção e as informações da empresa na primeira seção.');
-    }
-  }, [currentSection, completedSections, handleSave, isCurrentSectionValid]);
-
-  const handleSectionClick = useCallback((section: number) => {
-    // Permite navegar para trás livremente ou para frente se a seção anterior foi validada
-    if (section <= currentSection || completedSections.includes(section - 1)) {
-      setCurrentSection(section);
-    } else {
-      alert('Por favor, preencha a seção atual e as anteriores antes de avançar.');
-    }
-  }, [currentSection, completedSections]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey) {
-        switch (e.key) {
-          case 'ArrowLeft':
-            e.preventDefault();
-            handlePrevious();
-            break;
-          case 'ArrowRight':
-            e.preventDefault();
-            handleNext();
-            break;
-          case 's':
-            e.preventDefault();
-            handleSave(); // Chamando handleSave aqui
-            break;
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handlePrevious, handleNext, handleSave]); // Dependências do useCallback
-
   // Get questions for current section
   const getCurrentSectionQuestions = (): Question[] => {
     return DISCOVERY_QUESTIONS.filter(q => q.sectionNumber === currentSection);
@@ -153,7 +99,7 @@ export default function DiscoveryForm({
     return sections;
   };
 
-  // Validate current section
+  // Validate current section - MOVED UP BEFORE useCallback
   const isCurrentSectionValid = (): boolean => {
     // Validação das informações do cliente na primeira seção
     if (currentSection === 1) {
@@ -193,6 +139,60 @@ export default function DiscoveryForm({
       }
     });
   };
+
+  // Keyboard shortcuts
+  const handlePrevious = useCallback(() => {
+    if (currentSection > 1) {
+      setCurrentSection(prev => prev - 1);
+    }
+  }, [currentSection]);
+
+  const handleNext = useCallback(() => {
+    if (isCurrentSectionValid()) {
+      if (!completedSections.includes(currentSection)) {
+        setCompletedSections(prev => [...prev, currentSection]);
+      }
+      handleSave(); // Salva antes de avançar
+      if (currentSection < DISCOVERY_QUESTIONS[DISCOVERY_QUESTIONS.length - 1].sectionNumber) { // Usa o número da última seção dinamicamente
+        setCurrentSection(prev => prev + 1);
+      }
+    } else {
+      alert('Por favor, preencha todas as perguntas obrigatórias desta seção e as informações da empresa na primeira seção.');
+    }
+  }, [currentSection, completedSections, handleSave]); // REMOVED isCurrentSectionValid from dependencies
+
+  const handleSectionClick = useCallback((section: number) => {
+    // Permite navegar para trás livremente ou para frente se a seção anterior foi validada
+    if (section <= currentSection || completedSections.includes(section - 1)) {
+      setCurrentSection(section);
+    } else {
+      alert('Por favor, preencha a seção atual e as anteriores antes de avançar.');
+    }
+  }, [currentSection, completedSections]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey) {
+        switch (e.key) {
+          case 'ArrowLeft':
+            e.preventDefault();
+            handlePrevious();
+            break;
+          case 'ArrowRight':
+            e.preventDefault();
+            handleNext();
+            break;
+          case 's':
+            e.preventDefault();
+            handleSave(); // Chamando handleSave aqui
+            break;
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handlePrevious, handleNext, handleSave]); // Dependências do useCallback
 
   // Handle response change
   const handleResponseChange = useCallback((questionId: string, value: any) => {
