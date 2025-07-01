@@ -5,7 +5,7 @@
  * =====================================================
  */
 
-import { QuestionResponse, SectionInsight, AgentRecommendation, ROIProjection } from './types';
+import { QuestionResponse, SectionInsight, AgentRecommendation, ROIProjection, ClientProfile } from './types';
 
 export interface PromptConfig {
   temperature: number;
@@ -15,12 +15,7 @@ export interface PromptConfig {
 }
 
 export interface AnalysisContext {
-  clientProfile: {
-    company: string;
-    sector: string;
-    size: string;
-    contact: string;
-  };
+  clientProfile: ClientProfile; // Usar o tipo ClientProfile importado
   responses: QuestionResponse[];
   observations: string[];
   aiAwareNotes: string[];
@@ -298,8 +293,8 @@ export function buildContextualizedPrompt(
 ): string {
   const contextInjection = MASTER_PROMPT_TEMPLATE.CONTEXT_INJECTION
     .replace('{company}', context.clientProfile.company)
-    .replace('{sector}', context.clientProfile.sector)
-    .replace('{size}', context.clientProfile.size)
+    .replace('{sector}', context.clientProfile.sector || 'não especificado')
+    .replace('{size}', context.clientProfile.size || 'não especificado')
     .replace('{totalQuestions}', context.responses.length.toString())
     .replace('{sectionsCompleted}', '17')
     .replace('{observationsCount}', context.observations.length.toString())
