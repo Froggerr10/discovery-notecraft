@@ -9,7 +9,7 @@ import FormNavigation from './FormNavigation';
 
 interface DiscoveryFormProps {
   onSubmit: (submission: FormSubmission) => Promise<void>;
-  initialData?: Partial<FormSubmission>;
+  initialData?: Partial<FormSubmission>; // Partial<FormSubmission> é bom para dados iniciais, mas FormSubmission deve ter todos os campos
   className?: string;
 }
 
@@ -41,6 +41,7 @@ export default function DiscoveryForm({
         setResponses(responsesMap);
       }
       
+      // Acessando as propriedades com optional chaining para evitar erros de tipo se initialData for Partial
       if (initialData.companyName) setClientInfo(prev => ({ ...prev, companyName: initialData.companyName! }));
       if (initialData.contactName) setClientInfo(prev => ({ ...prev, contactName: initialData.contactName! }));
       if (initialData.contactEmail) setClientInfo(prev => ({ ...prev, contactEmail: initialData.contactEmail! }));
@@ -57,7 +58,7 @@ export default function DiscoveryForm({
 
       return () => clearTimeout(autoSaveTimer);
     }
-  }, [hasUnsavedChanges]);
+  }, [hasUnsavedChanges, handleSave]); // Adicionado handleSave para useCallback
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -74,7 +75,7 @@ export default function DiscoveryForm({
             break;
           case 's':
             e.preventDefault();
-            handleSave();
+            handleSave(); // Chamando handleSave aqui
             break;
         }
       }
@@ -82,7 +83,7 @@ export default function DiscoveryForm({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentSection, responses]);
+  }, [handlePrevious, handleNext, handleSave]); // Dependências do useCallback
 
   // Get questions for current section
   const getCurrentSectionQuestions = (): Question[] => {
@@ -92,8 +93,12 @@ export default function DiscoveryForm({
   // Get section names
   const getSectionNames = (): string[] => {
     const sections: string[] = [];
-    for (let i = 1; i <= 17; i++) {
-      const question = DISCOVERY_QUESTIONS.find(q => q.sectionNumber === i);
+    // Certifica-se de que a ordem das seções seja mantida
+    const sectionNumbers = new Set(DISCOVERY_QUESTIONS.map(q => q.sectionNumber));
+    const sortedSectionNumbers = Array.from(sectionNumbers).sort((a, b) => a - b);
+
+    for (const num of sortedSectionNumbers) {
+      const question = DISCOVERY_QUESTIONS.find(q => q.sectionNumber === num);
       if (question) {
         sections.push(question.sectionName);
       }
@@ -104,24 +109,39 @@ export default function DiscoveryForm({
   // Validate current section
   const isCurrentSectionValid = (): boolean => {
     const currentQuestions = getCurrentSectionQuestions();
+    
+    // Validação das informações do cliente na primeira seção
+    if (currentSection === 1) {
+      if (!clientInfo.companyName.trim() || !clientInfo.contactName.trim() || !clientInfo.contactEmail.trim() || !clientInfo.contactPhone.trim()) {
+        return false;
+      }
+    }
+
     return currentQuestions.every(question => {
       if (!question.required) return true;
       
       const response = responses[question.id];
-      if (!response) return false;
+      if (!response || response.response === undefined || response.response === null) {
+        return false; // Resposta não existe ou é nula/indefinida
+      }
 
       const value = response.response;
       
       switch (question.responseType) {
         case 'text':
+          return typeof value === 'string' && value.trim() !== '';
         case 'number':
-          return value && value.toString().trim() !== '';
+          // Garante que é um número e não NaN
+          return typeof value === 'number' && !isNaN(value);
         case 'radio':
-          return value && value !== '';
+          return typeof value === 'string' && value !== '';
         case 'checkbox':
           return Array.isArray(value) && value.length > 0;
         case 'slider':
-          return value && typeof value === 'object' && Object.keys(value).length > 0;
+          // Para slider, espera-se um objeto com keys e valores, ou um único valor
+          // A validação específica para slider pode depender da implementação do componente.
+          // Aqui, verificamos se é um objeto e tem ao menos uma entrada.
+          return typeof value === 'object' && value !== null && Object.keys(value).length > 0;
         default:
           return true;
       }
@@ -133,7 +153,7 @@ export default function DiscoveryForm({
     setResponses(prev => ({
       ...prev,
       [questionId]: {
-        ...prev[questionId],
+        ...prev[questionId], // Mantém observations e aiAware se existirem
         questionId,
         response: value,
         updatedAt: new Date().toISOString()
@@ -148,7 +168,8 @@ export default function DiscoveryForm({
       ...prev,
       [questionId]: {
         ...prev[questionId],
-        questionId,
+        questionId, // Garante que questionId esteja presente
+        response: prev[questionId]?.response, // Mantém a resposta existente
         observations,
         updatedAt: new Date().toISOString()
       }
@@ -162,7 +183,8 @@ export default function DiscoveryForm({
       ...prev,
       [questionId]: {
         ...prev[questionId],
-        questionId,
+        questionId, // Garante que questionId esteja presente
+        response: prev[questionId]?.response, // Mantém a resposta existente
         aiAware,
         updatedAt: new Date().toISOString()
       }
@@ -170,43 +192,58 @@ export default function DiscoveryForm({
     setHasUnsavedChanges(true);
   }, []);
 
-  // Navigation handlers
-  const handleNext = () => {
-    if (isCurrentSectionValid() && currentSection < 17) {
+  // Save handler (Wrapped in useCallback)
+  const handleSave = useCallback(async () => {
+    try {
+      // Simula uma chamada API de salvamento. Em um app real, você enviaria os dados para o backend.
+      // Aqui você poderia chamar um `onSave` prop se quisesse salvar no componente pai.
+      console.log('Salvando rascunho...', { clientInfo, responses });
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simula latência
+      setHasUnsavedChanges(false);
+      console.log('Rascunho salvo!');
+    } catch (error) {
+      console.error('Erro ao salvar formulário:', error);
+    }
+  }, [clientInfo, responses]); // Dependências do useCallback
+
+  // Navigation handlers (Wrapped in useCallback)
+  const handleNext = useCallback(() => {
+    if (isCurrentSectionValid()) {
       if (!completedSections.includes(currentSection)) {
         setCompletedSections(prev => [...prev, currentSection]);
       }
       
-      handleSave();
-      setCurrentSection(prev => prev + 1);
+      handleSave(); // Salva antes de avançar
+      if (currentSection < 17) {
+        setCurrentSection(prev => prev + 1);
+      }
+    } else {
+      alert('Por favor, preencha todas as perguntas obrigatórias desta seção.');
     }
-  };
+  }, [currentSection, completedSections, handleSave, isCurrentSectionValid]);
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     if (currentSection > 1) {
       setCurrentSection(prev => prev - 1);
     }
-  };
+  }, [currentSection]);
 
-  const handleSectionClick = (section: number) => {
+  const handleSectionClick = useCallback((section: number) => {
+    // Permite navegar para trás livremente ou para frente se a seção anterior foi validada
     if (section <= currentSection || completedSections.includes(section - 1)) {
       setCurrentSection(section);
+    } else {
+      alert('Por favor, preencha a seção atual e as anteriores antes de avançar.');
     }
-  };
-
-  // Save handler
-  const handleSave = async () => {
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setHasUnsavedChanges(false);
-    } catch (error) {
-      console.error('Error saving form:', error);
-    }
-  };
+  }, [currentSection, completedSections]);
 
   // Submit handler
   const handleSubmit = async () => {
-    if (!isCurrentSectionValid()) return;
+    // Garante que a seção atual é válida e que as informações do cliente estão preenchidas (se for a primeira seção)
+    if (!isCurrentSectionValid()) {
+      alert('Por favor, preencha todas as perguntas obrigatórias da seção atual e as informações da empresa.');
+      return;
+    }
 
     setIsSubmitting(true);
     
@@ -226,8 +263,10 @@ export default function DiscoveryForm({
 
       await onSubmit(submission);
       setHasUnsavedChanges(false);
+      alert('Formulário enviado com sucesso!'); // Feedback ao usuário
     } catch (error) {
       console.error('Error submitting form:', error);
+      alert('Ocorreu um erro ao enviar o formulário. Por favor, tente novamente.'); // Feedback de erro
     } finally {
       setIsSubmitting(false);
     }
@@ -271,7 +310,7 @@ export default function DiscoveryForm({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <input
                 type="text"
-                placeholder="Nome da Empresa"
+                placeholder="Nome da Empresa (Obrigatório)"
                 value={clientInfo.companyName}
                 onChange={(e) => {
                   setClientInfo(prev => ({ ...prev, companyName: e.target.value }));
@@ -281,7 +320,7 @@ export default function DiscoveryForm({
               />
               <input
                 type="text"
-                placeholder="Nome do Contato"
+                placeholder="Nome do Contato (Obrigatório)"
                 value={clientInfo.contactName}
                 onChange={(e) => {
                   setClientInfo(prev => ({ ...prev, contactName: e.target.value }));
@@ -291,7 +330,7 @@ export default function DiscoveryForm({
               />
               <input
                 type="email"
-                placeholder="E-mail de Contato"
+                placeholder="E-mail de Contato (Obrigatório)"
                 value={clientInfo.contactEmail}
                 onChange={(e) => {
                   setClientInfo(prev => ({ ...prev, contactEmail: e.target.value }));
@@ -301,7 +340,7 @@ export default function DiscoveryForm({
               />
               <input
                 type="tel"
-                placeholder="Telefone de Contato"
+                placeholder="Telefone de Contato (Obrigatório)"
                 value={clientInfo.contactPhone}
                 onChange={(e) => {
                   setClientInfo(prev => ({ ...prev, contactPhone: e.target.value }));
@@ -319,7 +358,7 @@ export default function DiscoveryForm({
             <div className="sticky top-8">
               <SectionProgress
                 currentSection={currentSection}
-                totalSections={17}
+                totalSections={sectionNames.length} // Usar o número real de seções
                 completedSections={completedSections}
                 sectionNames={sectionNames}
                 onSectionClick={handleSectionClick}
@@ -350,7 +389,7 @@ export default function DiscoveryForm({
               {/* Navigation */}
               <FormNavigation
                 currentSection={currentSection}
-                totalSections={17}
+                totalSections={sectionNames.length} // Usar o número real de seções
                 isCurrentSectionValid={isCurrentSectionValid()}
                 isSubmitting={isSubmitting}
                 hasUnsavedChanges={hasUnsavedChanges}
