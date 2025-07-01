@@ -12,6 +12,7 @@ export const MOCK_CLIENT_INFO: ClientProfile = {
   name: "Dr. Roberto Silva",
   email: "roberto.silva@silvaassociados.com.br",
   phone: "(11) 99999-8888"
+  // sector e size são opcionais, não precisam ser incluídos
 };
 
 export const MOCK_RESPONSES: QuestionResponse[] = [
@@ -152,7 +153,7 @@ export const MOCK_FORM_SUBMISSION: FormSubmission = {
   clientProfile: MOCK_CLIENT_INFO,
   responses: MOCK_RESPONSES,
   status: 'draft',
-  submittedAt: '',
+  submittedAt: undefined, // Removido string vazia para consistência
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   isCompleted: false,
