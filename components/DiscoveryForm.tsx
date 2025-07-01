@@ -2,14 +2,15 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { DISCOVERY_QUESTIONS } from '../lib/questions';
-import { Question, FormSubmission, QuestionResponse } from '../lib/types';
+// Importa Question, FormSubmission e QuestionResponse do seu types.ts
+import { Question, FormSubmission, QuestionResponse, ClientProfile } from '../lib/types';
 import QuestionRenderer from './QuestionRenderer';
 import SectionProgress from './SectionProgress';
 import FormNavigation from './FormNavigation';
 
 interface DiscoveryFormProps {
   onSubmit: (submission: FormSubmission) => Promise<void>;
-  initialData?: Partial<FormSubmission>; // Partial<FormSubmission> é bom para dados iniciais, mas FormSubmission deve ter todos os campos
+  initialData?: Partial<FormSubmission>; // Partial<FormSubmission> é bom para dados iniciais
   className?: string;
 }
 
@@ -23,11 +24,11 @@ export default function DiscoveryForm({
   const [completedSections, setCompletedSections] = useState<number[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [clientInfo, setClientInfo] = useState({
-    companyName: '',
-    contactName: '',
-    contactEmail: '',
-    contactPhone: ''
+  const [clientInfo, setClientInfo] = useState<ClientProfile>({ // Usando ClientProfile do types.ts
+    company: '', // Corresponde a companyName no formulário
+    name: '', // Corresponde a contactName no formulário
+    email: '', // Corresponde a contactEmail no formulário
+    phone: '', // Corresponde a contactPhone no formulário
   });
 
   // Initialize form with existing data
@@ -41,15 +42,33 @@ export default function DiscoveryForm({
         setResponses(responsesMap);
       }
       
-      // Acessando as propriedades com optional chaining para evitar erros de tipo se initialData for Partial
-      if (initialData.companyName) setClientInfo(prev => ({ ...prev, companyName: initialData.companyName! }));
-      if (initialData.contactName) setClientInfo(prev => ({ ...prev, contactName: initialData.contactName! }));
-      if (initialData.contactEmail) setClientInfo(prev => ({ ...prev, contactEmail: initialData.contactEmail! }));
-      if (initialData.contactPhone) setClientInfo(prev => ({ ...prev, contactPhone: initialData.contactPhone! }));
+      // Corrigido para acessar initialData.clientProfile
+      if (initialData.clientProfile) {
+        setClientInfo(prev => ({
+          ...prev,
+          company: initialData.clientProfile?.company || '',
+          name: initialData.clientProfile?.name || '',
+          email: initialData.clientProfile?.email || '',
+          phone: initialData.clientProfile?.phone || '',
+        }));
+      }
     }
   }, [initialData]);
 
   // Auto-save functionality
+  // Envolvido em useCallback para otimização e dependência no useEffect
+  const handleSave = useCallback(async () => {
+    try {
+      // Simula uma chamada API de salvamento. Em um app real, você enviaria os dados para o backend.
+      console.log('Salvando rascunho...', { clientInfo, responses });
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simula latência
+      setHasUnsavedChanges(false);
+      console.log('Rascunho salvo!');
+    } catch (error) {
+      console.error('Erro ao salvar formulário:', error);
+    }
+  }, [clientInfo, responses]); // Dependências do useCallback
+
   useEffect(() => {
     if (hasUnsavedChanges) {
       const autoSaveTimer = setTimeout(() => {
@@ -58,9 +77,38 @@ export default function DiscoveryForm({
 
       return () => clearTimeout(autoSaveTimer);
     }
-  }, [hasUnsavedChanges, handleSave]); // Adicionado handleSave para useCallback
+  }, [hasUnsavedChanges, handleSave]);
 
   // Keyboard shortcuts
+  const handlePrevious = useCallback(() => {
+    if (currentSection > 1) {
+      setCurrentSection(prev => prev - 1);
+    }
+  }, [currentSection]);
+
+  const handleNext = useCallback(() => {
+    if (isCurrentSectionValid()) {
+      if (!completedSections.includes(currentSection)) {
+        setCompletedSections(prev => [...prev, currentSection]);
+      }
+      handleSave(); // Salva antes de avançar
+      if (currentSection < DISCOVERY_QUESTIONS[DISCOVERY_QUESTIONS.length - 1].sectionNumber) { // Usa o número da última seção dinamicamente
+        setCurrentSection(prev => prev + 1);
+      }
+    } else {
+      alert('Por favor, preencha todas as perguntas obrigatórias desta seção e as informações da empresa na primeira seção.');
+    }
+  }, [currentSection, completedSections, handleSave, isCurrentSectionValid]);
+
+  const handleSectionClick = useCallback((section: number) => {
+    // Permite navegar para trás livremente ou para frente se a seção anterior foi validada
+    if (section <= currentSection || completedSections.includes(section - 1)) {
+      setCurrentSection(section);
+    } else {
+      alert('Por favor, preencha a seção atual e as anteriores antes de avançar.');
+    }
+  }, [currentSection, completedSections]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey) {
@@ -93,7 +141,6 @@ export default function DiscoveryForm({
   // Get section names
   const getSectionNames = (): string[] => {
     const sections: string[] = [];
-    // Certifica-se de que a ordem das seções seja mantida
     const sectionNumbers = new Set(DISCOVERY_QUESTIONS.map(q => q.sectionNumber));
     const sortedSectionNumbers = Array.from(sectionNumbers).sort((a, b) => a - b);
 
@@ -108,40 +155,39 @@ export default function DiscoveryForm({
 
   // Validate current section
   const isCurrentSectionValid = (): boolean => {
-    const currentQuestions = getCurrentSectionQuestions();
-    
     // Validação das informações do cliente na primeira seção
     if (currentSection === 1) {
-      if (!clientInfo.companyName.trim() || !clientInfo.contactName.trim() || !clientInfo.contactEmail.trim() || !clientInfo.contactPhone.trim()) {
+      if (!clientInfo.company.trim() || !clientInfo.name.trim() || !clientInfo.email.trim() || !clientInfo.phone.trim()) {
         return false;
       }
     }
 
+    const currentQuestions = getCurrentSectionQuestions();
     return currentQuestions.every(question => {
       if (!question.required) return true;
       
       const response = responses[question.id];
-      if (!response || response.response === undefined || response.response === null) {
-        return false; // Resposta não existe ou é nula/indefinida
+      // Verifica se a resposta existe e se o valor não é nulo/indefinido
+      if (!response || response.responseValue === undefined || response.responseValue === null) {
+        return false;
       }
 
-      const value = response.response;
+      const value = response.responseValue; // CORREÇÃO: Usar responseValue
       
       switch (question.responseType) {
         case 'text':
           return typeof value === 'string' && value.trim() !== '';
         case 'number':
-          // Garante que é um número e não NaN
           return typeof value === 'number' && !isNaN(value);
         case 'radio':
+        case 'select': // Adicionado select para compatibilidade, se usado.
           return typeof value === 'string' && value !== '';
         case 'checkbox':
           return Array.isArray(value) && value.length > 0;
         case 'slider':
-          // Para slider, espera-se um objeto com keys e valores, ou um único valor
-          // A validação específica para slider pode depender da implementação do componente.
-          // Aqui, verificamos se é um objeto e tem ao menos uma entrada.
-          return typeof value === 'object' && value !== null && Object.keys(value).length > 0;
+          // Para slider, espera-se um objeto (para múltiplos valores) ou um número único.
+          // Aqui, verificamos se é um número (slider simples) ou um objeto não vazio (slider com opções).
+          return (typeof value === 'number' && !isNaN(value)) || (typeof value === 'object' && value !== null && Object.keys(value).length > 0);
         default:
           return true;
       }
@@ -150,13 +196,20 @@ export default function DiscoveryForm({
 
   // Handle response change
   const handleResponseChange = useCallback((questionId: string, value: any) => {
+    const questionData = DISCOVERY_QUESTIONS.find(q => q.id === questionId);
+    if (!questionData) return;
+
     setResponses(prev => ({
       ...prev,
       [questionId]: {
-        ...prev[questionId], // Mantém observations e aiAware se existirem
-        questionId,
-        response: value,
-        updatedAt: new Date().toISOString()
+        ...prev[questionId],
+        questionId: questionId,
+        sectionNumber: questionData.sectionNumber,
+        sectionName: questionData.sectionName,
+        questionText: questionData.questionText,
+        responseType: questionData.responseType,
+        responseValue: value, // CORREÇÃO: Usar responseValue
+        answeredAt: new Date().toISOString(), // CORREÇÃO: De Date para string
       }
     }));
     setHasUnsavedChanges(true);
@@ -168,78 +221,30 @@ export default function DiscoveryForm({
       ...prev,
       [questionId]: {
         ...prev[questionId],
-        questionId, // Garante que questionId esteja presente
-        response: prev[questionId]?.response, // Mantém a resposta existente
-        observations,
-        updatedAt: new Date().toISOString()
+        questionId: questionId, // Garante que questionId esteja presente
+        observations: observations, // CORREÇÃO: usar nome 'observations'
+        answeredAt: new Date().toISOString(),
       }
     }));
     setHasUnsavedChanges(true);
   }, []);
 
   // Handle AI-aware change
-  const handleAiAwareChange = useCallback((questionId: string, aiAware: string) => {
+  const handleAiAwareChange = useCallback((questionId: string, aiAwareNotes: string) => { // CORREÇÃO: nome aiAwareNotes
     setResponses(prev => ({
       ...prev,
       [questionId]: {
         ...prev[questionId],
-        questionId, // Garante que questionId esteja presente
-        response: prev[questionId]?.response, // Mantém a resposta existente
-        aiAware,
-        updatedAt: new Date().toISOString()
+        questionId: questionId, // Garante que questionId esteja presente
+        aiAwareNotes: aiAwareNotes, // CORREÇÃO: usar nome 'aiAwareNotes'
+        answeredAt: new Date().toISOString(),
       }
     }));
     setHasUnsavedChanges(true);
   }, []);
 
-  // Save handler (Wrapped in useCallback)
-  const handleSave = useCallback(async () => {
-    try {
-      // Simula uma chamada API de salvamento. Em um app real, você enviaria os dados para o backend.
-      // Aqui você poderia chamar um `onSave` prop se quisesse salvar no componente pai.
-      console.log('Salvando rascunho...', { clientInfo, responses });
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simula latência
-      setHasUnsavedChanges(false);
-      console.log('Rascunho salvo!');
-    } catch (error) {
-      console.error('Erro ao salvar formulário:', error);
-    }
-  }, [clientInfo, responses]); // Dependências do useCallback
-
-  // Navigation handlers (Wrapped in useCallback)
-  const handleNext = useCallback(() => {
-    if (isCurrentSectionValid()) {
-      if (!completedSections.includes(currentSection)) {
-        setCompletedSections(prev => [...prev, currentSection]);
-      }
-      
-      handleSave(); // Salva antes de avançar
-      if (currentSection < 17) {
-        setCurrentSection(prev => prev + 1);
-      }
-    } else {
-      alert('Por favor, preencha todas as perguntas obrigatórias desta seção.');
-    }
-  }, [currentSection, completedSections, handleSave, isCurrentSectionValid]);
-
-  const handlePrevious = useCallback(() => {
-    if (currentSection > 1) {
-      setCurrentSection(prev => prev - 1);
-    }
-  }, [currentSection]);
-
-  const handleSectionClick = useCallback((section: number) => {
-    // Permite navegar para trás livremente ou para frente se a seção anterior foi validada
-    if (section <= currentSection || completedSections.includes(section - 1)) {
-      setCurrentSection(section);
-    } else {
-      alert('Por favor, preencha a seção atual e as anteriores antes de avançar.');
-    }
-  }, [currentSection, completedSections]);
-
   // Submit handler
   const handleSubmit = async () => {
-    // Garante que a seção atual é válida e que as informações do cliente estão preenchidas (se for a primeira seção)
     if (!isCurrentSectionValid()) {
       alert('Por favor, preencha todas as perguntas obrigatórias da seção atual e as informações da empresa.');
       return;
@@ -250,15 +255,20 @@ export default function DiscoveryForm({
     try {
       const submission: FormSubmission = {
         id: initialData?.id || crypto.randomUUID(),
-        companyName: clientInfo.companyName,
-        contactName: clientInfo.contactName,
-        contactEmail: clientInfo.contactEmail,
-        contactPhone: clientInfo.contactPhone,
+        clientProfile: { // CORREÇÃO: Objeto clientProfile
+          company: clientInfo.company,
+          name: clientInfo.name,
+          email: clientInfo.email,
+          phone: clientInfo.phone,
+          // 'sector' e 'size' são opcionais, se não coletados, não precisam ser incluídos aqui.
+        },
         responses: Object.values(responses),
-        status: 'completed',
+        status: 'completed', // Adicionado status conforme o types.ts corrigido
         submittedAt: new Date().toISOString(),
         createdAt: initialData?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        isCompleted: true, // Adicionado isCompleted
+        analysisCompleted: false, // Define como false inicialmente
       };
 
       await onSubmit(submission);
@@ -274,6 +284,7 @@ export default function DiscoveryForm({
 
   const currentQuestions = getCurrentSectionQuestions();
   const sectionNames = getSectionNames();
+  const totalSections = sectionNames.length; // Calcula o total de seções dinamicamente
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 ${className}`}>
@@ -311,9 +322,9 @@ export default function DiscoveryForm({
               <input
                 type="text"
                 placeholder="Nome da Empresa (Obrigatório)"
-                value={clientInfo.companyName}
+                value={clientInfo.company}
                 onChange={(e) => {
-                  setClientInfo(prev => ({ ...prev, companyName: e.target.value }));
+                  setClientInfo(prev => ({ ...prev, company: e.target.value }));
                   setHasUnsavedChanges(true);
                 }}
                 className="p-3 rounded-lg backdrop-blur-sm bg-white/5 border border-white/10 text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all duration-200"
@@ -321,9 +332,9 @@ export default function DiscoveryForm({
               <input
                 type="text"
                 placeholder="Nome do Contato (Obrigatório)"
-                value={clientInfo.contactName}
+                value={clientInfo.name}
                 onChange={(e) => {
-                  setClientInfo(prev => ({ ...prev, contactName: e.target.value }));
+                  setClientInfo(prev => ({ ...prev, name: e.target.value }));
                   setHasUnsavedChanges(true);
                 }}
                 className="p-3 rounded-lg backdrop-blur-sm bg-white/5 border border-white/10 text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all duration-200"
@@ -331,9 +342,9 @@ export default function DiscoveryForm({
               <input
                 type="email"
                 placeholder="E-mail de Contato (Obrigatório)"
-                value={clientInfo.contactEmail}
+                value={clientInfo.email}
                 onChange={(e) => {
-                  setClientInfo(prev => ({ ...prev, contactEmail: e.target.value }));
+                  setClientInfo(prev => ({ ...prev, email: e.target.value }));
                   setHasUnsavedChanges(true);
                 }}
                 className="p-3 rounded-lg backdrop-blur-sm bg-white/5 border border-white/10 text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all duration-200"
@@ -341,9 +352,9 @@ export default function DiscoveryForm({
               <input
                 type="tel"
                 placeholder="Telefone de Contato (Obrigatório)"
-                value={clientInfo.contactPhone}
+                value={clientInfo.phone}
                 onChange={(e) => {
-                  setClientInfo(prev => ({ ...prev, contactPhone: e.target.value }));
+                  setClientInfo(prev => ({ ...prev, phone: e.target.value }));
                   setHasUnsavedChanges(true);
                 }}
                 className="p-3 rounded-lg backdrop-blur-sm bg-white/5 border border-white/10 text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all duration-200"
@@ -358,7 +369,7 @@ export default function DiscoveryForm({
             <div className="sticky top-8">
               <SectionProgress
                 currentSection={currentSection}
-                totalSections={sectionNames.length} // Usar o número real de seções
+                totalSections={totalSections}
                 completedSections={completedSections}
                 sectionNames={sectionNames}
                 onSectionClick={handleSectionClick}
@@ -375,9 +386,9 @@ export default function DiscoveryForm({
                   <div key={question.id} className={index > 0 ? 'mt-12 pt-8 border-t border-white/10' : ''}>
                     <QuestionRenderer
                       question={question}
-                      value={responses[question.id]?.response}
+                      value={responses[question.id]?.responseValue} // CORREÇÃO: Usar responseValue
                       observationsValue={responses[question.id]?.observations || ''}
-                      aiAwareValue={responses[question.id]?.aiAware || ''}
+                      aiAwareValue={responses[question.id]?.aiAwareNotes || ''} // CORREÇÃO: Usar aiAwareNotes
                       onChange={(value) => handleResponseChange(question.id, value)}
                       onObservationsChange={(value) => handleObservationsChange(question.id, value)}
                       onAiAwareChange={(value) => handleAiAwareChange(question.id, value)}
@@ -389,7 +400,7 @@ export default function DiscoveryForm({
               {/* Navigation */}
               <FormNavigation
                 currentSection={currentSection}
-                totalSections={sectionNames.length} // Usar o número real de seções
+                totalSections={totalSections}
                 isCurrentSectionValid={isCurrentSectionValid()}
                 isSubmitting={isSubmitting}
                 hasUnsavedChanges={hasUnsavedChanges}
