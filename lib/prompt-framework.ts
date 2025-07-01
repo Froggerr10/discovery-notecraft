@@ -5,6 +5,8 @@
  * =====================================================
  */
 
+import { QuestionResponse, SectionInsight, AgentRecommendation, ROIProjection } from './types';
+
 export interface PromptConfig {
   temperature: number;
   maxTokens: number;
