@@ -1,9 +1,11 @@
 /**
  * =====================================================
  * DISCOVERY NOTECRAFT™ - SCHEMAS E TIPOS TYPESCRIPT
- * Estruturas de dados para todo o sistema
+ * Estruturas de dados para todo o sistema + CNPJ
  * =====================================================
  */
+
+import { CompanyEnrichedData } from './cnpj-types';
 
 // =====================================================
 // TIPOS BASE DO SISTEMA
@@ -12,20 +14,34 @@
 export type PackageType = 'entry' | 'plus' | 'premium';
 export type PriorityLevel = 'critical' | 'high' | 'medium' | 'low';
 export type ReadinessLevel = 'iniciante' | 'intermediario' | 'avancado';
-export type ResponseType = 'radio' | 'checkbox' | 'slider' | 'text' | 'select' | 'number';
+export type ResponseType = 'radio' | 'checkbox' | 'slider' | 'text' | 'select' | 'number' | 'cnpj';
 
 // =====================================================
-// PERFIL DO CLIENTE
+// PERFIL DO CLIENTE ATUALIZADO COM CNPJ
 // =====================================================
 
 export interface ClientProfile {
+  // Dados da pessoa responsável
   name: string;
   email: string;
-  company: string;
   position?: string;
   phone?: string;
+  
+  // Dados básicos da empresa (manual)
+  company: string;
+  cnpj?: string;
+  
+  // Dados enriquecidos automaticamente (opcional)
+  enrichedData?: CompanyEnrichedData;
+  
+  // Classificação manual (se não houver CNPJ)
   sector?: string;
   size?: 'small' | 'medium' | 'large';
+  
+  // Flags de enriquecimento
+  isEnriched: boolean;
+  enrichmentDate?: string;
+  enrichmentSource?: string;
 }
 
 // =====================================================
@@ -44,6 +60,13 @@ export interface Question {
   required: boolean;
   placeholder?: string;
   additionalField?: string;
+  
+  // Novo: campos condicionais baseados em dados CNPJ
+  showIf?: {
+    cnpjField?: keyof CompanyEnrichedData;
+    condition?: 'equals' | 'greater' | 'contains';
+    value?: any;
+  };
 }
 
 export interface QuestionResponse {
@@ -59,7 +82,7 @@ export interface QuestionResponse {
 }
 
 // =====================================================
-// ANÁLISE E INSIGHTS
+// ANÁLISE E INSIGHTS ATUALIZADA
 // =====================================================
 
 export interface SectionInsight {
@@ -74,6 +97,13 @@ export interface SectionInsight {
   impactExplanation: string;
   priority: PriorityLevel;
   category: 'knowledge' | 'process' | 'technology' | 'people';
+  
+  // Novo: insights baseados em dados CNPJ
+  cnpjInsights?: {
+    sectorBenchmark?: string;
+    complianceLevel?: string;
+    growthPotential?: string;
+  };
 }
 
 export interface MaturityScores {
@@ -84,10 +114,14 @@ export interface MaturityScores {
   comercial: number;
   iaVision: number;
   overall: number;
+  
+  // Novo: scores baseados em dados CNPJ
+  cnpjCompliance?: number;
+  sectorAlignment?: number;
 }
 
 // =====================================================
-// RECOMENDAÇÕES DE AGENTES IA
+// RECOMENDAÇÕES DE AGENTES IA ATUALIZADA
 // =====================================================
 
 export interface AgentRecommendation {
@@ -103,10 +137,18 @@ export interface AgentRecommendation {
   isEssential: boolean;
   expectedBenefits: string[];
   requiredIntegrations: string[];
+  
+  // Novo: recomendações baseadas em dados CNPJ
+  cnpjAlignment?: {
+    sectorRelevance: number; // 0-100
+    sizeAppropriate: boolean;
+    complianceNeeded: boolean;
+    estimatedImpact: number;
+  };
 }
 
 // =====================================================
-// PROJEÇÕES FINANCEIRAS
+// PROJEÇÕES FINANCEIRAS ATUALIZADA
 // =====================================================
 
 export interface ROIProjection {
@@ -117,6 +159,14 @@ export interface ROIProjection {
   conservativeScenario: number;
   realisticScenario: number;
   optimisticScenario: number;
+  
+  // Novo: projeções baseadas em dados CNPJ
+  cnpjBasedProjections?: {
+    sectorBenchmarkROI: number;
+    sizeCorrectedROI: number;
+    complianceFactorROI: number;
+    riskAdjustedROI: number;
+  };
 }
 
 export interface MonthlyProjection {
@@ -125,10 +175,16 @@ export interface MonthlyProjection {
   returns: number;
   cumulative: number;
   breakeven?: boolean;
+  
+  // Novo: dados específicos por mês
+  cnpjFactors?: {
+    seasonality?: number;
+    complianceEvents?: string[];
+  };
 }
 
 // =====================================================
-// CONFIGURAÇÕES DE PACOTES
+// CONFIGURAÇÕES DE PACOTES ATUALIZADA
 // =====================================================
 
 export interface PackageConfiguration {
@@ -146,10 +202,18 @@ export interface PackageConfiguration {
   targetPaybackMonths: number;
   targetCompanySize: 'small' | 'medium' | 'large';
   isActive: boolean;
+  
+  // Novo: configurações baseadas em dados CNPJ
+  cnpjEligibility?: {
+    minimumPorte?: string;
+    requiredRegimes?: string[];
+    excludedSectors?: string[];
+    minimumRevenue?: number;
+  };
 }
 
 // =====================================================
-// ANÁLISE COMPLETA DO DISCOVERY
+// ANÁLISE COMPLETA DO DISCOVERY ATUALIZADA
 // =====================================================
 
 export interface DiscoveryAnalysis {
@@ -170,10 +234,30 @@ export interface DiscoveryAnalysis {
   predictedResistance: string[];
   analyzedAt: string;
   analystVersion: string;
+  
+  // Novo: análise baseada em dados CNPJ
+  cnpjAnalysis?: {
+    companyProfile: CompanyEnrichedData;
+    sectorBenchmarks: {
+      avgMaturityScore: number;
+      commonChallenges: string[];
+      successFactors: string[];
+    };
+    complianceAssessment: {
+      currentLevel: string;
+      requiredLevel: string;
+      gapAnalysis: string[];
+    };
+    growthProjections: {
+      sectorGrowthRate: number;
+      marketPosition: string;
+      scalabilityScore: number;
+    };
+  };
 }
 
 // =====================================================
-// SUBMISSÃO COMPLETA DO FORMULÁRIO
+// SUBMISSÃO COMPLETA DO FORMULÁRIO ATUALIZADA
 // =====================================================
 
 export interface FormSubmission {
@@ -190,10 +274,15 @@ export interface FormSubmission {
   implementationPriority?: PriorityLevel;
   status: 'pending' | 'completed' | 'draft';
   submittedAt?: string;
+  
+  // Novo: dados de enriquecimento
+  enrichmentStatus: 'none' | 'pending' | 'completed' | 'failed';
+  enrichmentData?: CompanyEnrichedData;
+  enrichmentErrors?: string[];
 }
 
 // =====================================================
-// ESTRUTURA DO RELATÓRIO FINAL
+// ESTRUTURA DO RELATÓRIO FINAL ATUALIZADA
 // =====================================================
 
 export interface DiscoveryReport {
@@ -207,16 +296,32 @@ export interface DiscoveryReport {
     keyInsights: string[];
     recommendedInvestment: number;
     projectedROI: number;
+    
+    // Novo: sumário executivo com dados CNPJ
+    companyProfile?: {
+      sector: string;
+      size: string;
+      maturityLevel: string;
+      keyOpportunities: string[];
+    };
   };
   implementationRoadmap: RoadmapPhase[];
   futureVision: {
     fiscoAIOpportunities: string[];
     neuroForgeExpansion: string[];
+    
+    // Novo: visão baseada em dados CNPJ
+    sectorSpecificVision?: string[];
+    scaleBasedOpportunities?: string[];
   };
   nextSteps: {
     immediateActions: string[];
     requiredResources: string[];
     decisionTimeline: string;
+    
+    // Novo: próximos passos baseados em CNPJ
+    complianceActions?: string[];
+    sectorSpecificSteps?: string[];
   };
 }
 
@@ -228,10 +333,17 @@ export interface RoadmapPhase {
   expectedROI: number;
   deliverables: string[];
   dependencies: string[];
+  
+  // Novo: fases baseadas em dados CNPJ
+  cnpjConsiderations?: {
+    complianceRequirements?: string[];
+    sectorSpecificTasks?: string[];
+    scalingFactors?: string[];
+  };
 }
 
 // =====================================================
-// DASHBOARD E VISUALIZAÇÕES
+// DASHBOARD E VISUALIZAÇÕES ATUALIZADA
 // =====================================================
 
 export interface DashboardData {
@@ -241,6 +353,11 @@ export interface DashboardData {
     roiTimeline: TimelineDataPoint[];
     agentsPriority: AgentPriorityData[];
     sectionScores: SectionScoreData[];
+    
+    // Novo: gráficos baseados em dados CNPJ
+    sectorComparison?: SectorComparisonData[];
+    complianceScore?: ComplianceScoreData;
+    growthProjection?: GrowthProjectionData[];
   };
 }
 
@@ -248,6 +365,10 @@ export interface RadarDataPoint {
   subject: string;
   value: number;
   fullMark: number;
+  
+  // Novo: dados comparativos
+  sectorAverage?: number;
+  benchmark?: number;
 }
 
 export interface TimelineDataPoint {
@@ -255,6 +376,10 @@ export interface TimelineDataPoint {
   investment: number;
   returns: number;
   cumulative: number;
+  
+  // Novo: dados setoriais
+  sectorAverage?: number;
+  confidence?: number;
 }
 
 export interface AgentPriorityData {
@@ -263,6 +388,10 @@ export interface AgentPriorityData {
   roi: string;
   weeks: number;
   status: 'critical' | 'high' | 'medium' | 'low';
+  
+  // Novo: dados específicos
+  sectorRelevance?: number;
+  sizeAppropriate?: boolean;
 }
 
 export interface SectionScoreData {
@@ -270,10 +399,37 @@ export interface SectionScoreData {
   score: number;
   maxScore: number;
   category: string;
+  
+  // Novo: comparações
+  sectorAverage?: number;
+  improvement?: number;
+}
+
+// Novos tipos para gráficos CNPJ
+export interface SectorComparisonData {
+  metric: string;
+  yourCompany: number;
+  sectorAverage: number;
+  topQuartile: number;
+}
+
+export interface ComplianceScoreData {
+  category: string;
+  current: number;
+  required: number;
+  gap: number;
+}
+
+export interface GrowthProjectionData {
+  year: number;
+  conservative: number;
+  realistic: number;
+  optimistic: number;
+  sectorGrowth: number;
 }
 
 // =====================================================
-// API RESPONSES
+// API RESPONSES ATUALIZADA
 // =====================================================
 
 export interface APIResponse<T> {
@@ -288,6 +444,7 @@ export interface APIResponse<T> {
     timestamp: string;
     requestId: string;
     version: string;
+    enrichmentUsed?: boolean;
   };
 }
 
@@ -295,6 +452,10 @@ export interface AnalysisRequest {
   submissionId: string;
   forceReAnalysis?: boolean;
   analysisDepth?: 'basic' | 'detailed' | 'comprehensive';
+  
+  // Novo: parâmetros de análise CNPJ
+  useCNPJEnrichment?: boolean;
+  cnpjAnalysisLevel?: 'basic' | 'advanced' | 'premium';
 }
 
 export interface AnalysisResponse {
@@ -304,25 +465,59 @@ export interface AnalysisResponse {
   agentRecommendations: AgentRecommendation[];
   processingTimeMs: number;
   tokensUsed: number;
+  
+  // Novo: dados de enriquecimento
+  enrichmentData?: CompanyEnrichedData;
+  enrichmentTime?: number;
+  confidenceScore?: number;
 }
 
 // =====================================================
-// LOG E AUDITORIA
+// CNPJ INTEGRATION HELPERS
+// =====================================================
+
+export interface CNPJIntegrationResult {
+  success: boolean;
+  data?: CompanyEnrichedData;
+  error?: string;
+  source: string;
+  processingTime: number;
+  confidenceLevel: number;
+}
+
+export interface EnrichmentConfig {
+  enableAutoEnrichment: boolean;
+  fallbackToManual: boolean;
+  requiredConfidence: number;
+  cacheHours: number;
+  retryAttempts: number;
+}
+
+// =====================================================
+// LOG E AUDITORIA ATUALIZADA
 // =====================================================
 
 export interface ActivityLog {
   id: string;
   submissionId: string;
-  activityType: 'form_started' | 'section_completed' | 'form_completed' | 'analysis_started' | 'analysis_completed' | 'report_generated' | 'report_downloaded';
+  activityType: 'form_started' | 'section_completed' | 'form_completed' | 'analysis_started' | 'analysis_completed' | 'report_generated' | 'report_downloaded' | 'cnpj_enriched' | 'enrichment_failed';
   activityDescription: string;
   userAgent?: string;
   ipAddress?: string;
   sessionData?: Record<string, any>;
   createdAt: string;
+  
+  // Novo: dados de enriquecimento
+  enrichmentData?: {
+    cnpj?: string;
+    success?: boolean;
+    source?: string;
+    processingTime?: number;
+  };
 }
 
 // =====================================================
-// CONFIGURAÇÕES DO SISTEMA
+// CONFIGURAÇÕES DO SISTEMA ATUALIZADA
 // =====================================================
 
 export interface SystemConfig {
@@ -336,21 +531,24 @@ export interface SystemConfig {
     enableAdvancedAnalysis: boolean;
     enableFutureVision: boolean;
     enableROICalculation: boolean;
+    enableCNPJEnrichment: boolean;
   };
   report: {
     defaultFormat: 'pdf' | 'html' | 'both';
     includeDashboard: boolean;
     includeCharts: boolean;
+    includeCNPJData: boolean;
   };
   security: {
     enableRateLimit: boolean;
     maxRequestsPerHour: number;
     enableLogging: boolean;
   };
+  enrichment: EnrichmentConfig;
 }
 
 // =====================================================
-// TIPOS DE ERRO
+// TIPOS DE ERRO ATUALIZADA
 // =====================================================
 
 export class DiscoveryError extends Error {
@@ -379,8 +577,15 @@ export class AnalysisError extends DiscoveryError {
   }
 }
 
+export class EnrichmentError extends DiscoveryError {
+  constructor(message: string, details?: any) {
+    super(message, 'ENRICHMENT_ERROR', 500, details);
+    this.name = 'EnrichmentError';
+  }
+}
+
 // =====================================================
-// VALIDADORES
+// VALIDADORES ATUALIZADA
 // =====================================================
 
 export function validateClientProfile(profile: Partial<ClientProfile>): profile is ClientProfile {
@@ -411,12 +616,13 @@ export function validateSubmission(submission: Partial<FormSubmission>): submiss
     submission.responses.length > 0 &&
     submission.createdAt &&
     submission.updatedAt &&
-    submission.isCompleted !== undefined
+    submission.isCompleted !== undefined &&
+    submission.enrichmentStatus !== undefined
   );
 }
 
 // =====================================================
-// CONSTANTES
+// CONSTANTES ATUALIZADA
 // =====================================================
 
 export const DISCOVERY_CONSTANTS = {
@@ -425,6 +631,11 @@ export const DISCOVERY_CONSTANTS = {
   MIN_COMPLETION_PERCENTAGE: 80,
   ANALYSIS_TIMEOUT_MS: 60000,
   MAX_RETRIES: 3,
+  
+  // Novo: constantes CNPJ
+  CNPJ_ENRICHMENT_TIMEOUT_MS: 15000,
+  MIN_CNPJ_CONFIDENCE: 70,
+  CNPJ_CACHE_HOURS: 24,
   
   SCORE_RANGES: {
     EXCELLENT: [9, 10],
@@ -443,11 +654,75 @@ export const DISCOVERY_CONSTANTS = {
     MONITOR_LEGISLATIVO: { min: 100, max: 200 }
   },
   
+  // Atualizado: preços baseados em porte
   PACKAGE_PRICES: {
     ENTRY: { min: 30000, max: 40000, recommended: 35000 },
     PLUS: { min: 50000, max: 70000, recommended: 60000 },
     PREMIUM: { min: 80000, max: 100000, recommended: 85000 }
+  },
+  
+  // Novo: ajustes de preço por porte
+  PORTE_PRICE_MULTIPLIERS: {
+    MEI: 0.5,
+    ME: 0.8,
+    EPP: 1.0,
+    GRANDE: 1.5
   }
 } as const;
 
-// Remova todo o export default do final
+// =====================================================
+// HELPERS DE CNPJ
+// =====================================================
+
+export function getPackagePriceForCompany(
+  packageType: PackageType, 
+  enrichedData?: CompanyEnrichedData
+): number {
+  const basePrice = DISCOVERY_CONSTANTS.PACKAGE_PRICES[packageType.toUpperCase() as keyof typeof DISCOVERY_CONSTANTS.PACKAGE_PRICES];
+  
+  if (!enrichedData) {
+    return basePrice.recommended;
+  }
+  
+  const multiplier = DISCOVERY_CONSTANTS.PORTE_PRICE_MULTIPLIERS[enrichedData.porte_oficial] || 1;
+  return Math.round(basePrice.recommended * multiplier);
+}
+
+export function isCompanyEligibleForPackage(
+  packageType: PackageType,
+  enrichedData?: CompanyEnrichedData
+): boolean {
+  if (!enrichedData) return true;
+  
+  // Regras de elegibilidade baseadas em porte
+  switch (packageType) {
+    case 'entry':
+      return ['MEI', 'ME'].includes(enrichedData.porte_oficial);
+    case 'plus':
+      return ['ME', 'EPP'].includes(enrichedData.porte_oficial);
+    case 'premium':
+      return ['EPP', 'GRANDE'].includes(enrichedData.porte_oficial);
+    default:
+      return true;
+  }
+}
+
+export function getRecommendedPackageForCompany(enrichedData?: CompanyEnrichedData): PackageType {
+  if (!enrichedData) return 'plus';
+  
+  switch (enrichedData.porte_oficial) {
+    case 'MEI':
+      return 'entry';
+    case 'ME':
+      return enrichedData.complexidade_tributaria === 'ALTA' ? 'plus' : 'entry';
+    case 'EPP':
+      return enrichedData.complexidade_tributaria === 'BAIXA' ? 'plus' : 'premium';
+    case 'GRANDE':
+      return 'premium';
+    default:
+      return 'plus';
+  }
+}
+
+// Remove o export default
+export type { CompanyEnrichedData };
